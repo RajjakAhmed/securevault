@@ -9,6 +9,8 @@ import os from "os";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { uploadEncryptedToStorage } from "../utils/storageUpload";
 import { downloadEncryptedFromStorage } from "../utils/storageDownload";
+import { deleteEncryptedFromStorage } from "../utils/storageDelete";
+
 
 /* ----------------------------------------
    Helper: Get Temp Folder Path
@@ -159,6 +161,43 @@ export const getMyFiles = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch files ❌",
+      error,
+    });
+  }
+};
+export const deleteFile = async (req: AuthRequest, res: Response) => {
+  try {
+    const fileId = String(req.params.id);
+    const userId = req.user.id;
+
+    // 1. Find file
+    const file = await prisma.file.findUnique({
+      where: { id: fileId },
+    });
+
+    if (!file) {
+      return res.status(404).json({ message: "File not found ❌" });
+    }
+
+    // 2. Ownership check
+    if (file.ownerId !== userId) {
+      return res.status(403).json({ message: "Access denied ❌" });
+    }
+
+    // 3. Delete from Supabase Storage
+    await deleteEncryptedFromStorage(file.encryptedPath);
+
+    // 4. Delete from Database
+    await prisma.file.delete({
+      where: { id: fileId },
+    });
+
+    return res.status(200).json({
+      message: "File deleted successfully ✅",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Delete failed ❌",
       error,
     });
   }
