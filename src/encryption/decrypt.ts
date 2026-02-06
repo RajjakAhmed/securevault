@@ -2,28 +2,29 @@ import crypto from "crypto";
 import fs from "fs";
 
 const algorithm = "aes-256-cbc";
+const key = crypto
+  .createHash("sha256")
+  .update(process.env.FILE_ENCRYPTION_KEY as string)
+  .digest();
 
 export const decryptFile = (inputPath: string, outputPath: string) => {
-  const secret = process.env.FILE_ENCRYPTION_KEY;
+  return new Promise<void>((resolve, reject) => {
+    const input = fs.createReadStream(inputPath);
 
-  if (!secret) {
-    throw new Error("FILE_ENCRYPTION_KEY missing in .env");
-  }
+    let iv: Buffer;
 
-  const key = crypto.createHash("sha256").update(secret).digest();
+    input.once("readable", () => {
+      iv = input.read(16);
 
-  const input = fs.createReadStream(inputPath);
+      const decipher = crypto.createDecipheriv(algorithm, key, iv);
 
-  // Read IV from first 16 bytes
-  let iv: Buffer;
+      const output = fs.createWriteStream(outputPath);
 
-  input.once("readable", () => {
-    iv = input.read(16);
-
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-
-    const output = fs.createWriteStream(outputPath);
-
-    input.pipe(decipher).pipe(output);
+      input
+        .pipe(decipher)
+        .pipe(output)
+        .on("finish", () => resolve())
+        .on("error", (err) => reject(err));
+    });
   });
 };

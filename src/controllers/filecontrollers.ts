@@ -1,55 +1,95 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import prisma from "../utils/prisma";
 import { encryptFile } from "../encryption/encrypt";
 import { decryptFile } from "../encryption/decrypt";
 import fs from "fs";
 import path from "path";
-import { AuthRequest } from "../middleware/authMiddleware";
+import os from "os";
 
+import { AuthRequest } from "../middleware/authMiddleware";
+import { uploadEncryptedToStorage } from "../utils/storageUpload";
+import { downloadEncryptedFromStorage } from "../utils/storageDownload";
+
+/* ----------------------------------------
+   Helper: Get Temp Folder Path
+----------------------------------------- */
+const getTempDir = () => {
+  const tempDir = path.join(os.tmpdir(), "securevault");
+
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  return tempDir;
+};
+
+/* ----------------------------------------
+   Upload File Controller
+----------------------------------------- */
 export const uploadFile = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(400).json({ message: "No file uploaded ❌" });
     }
 
     const userId = req.user.id;
 
+    // Temp directory
+    const tempDir = getTempDir();
+
+    // Uploaded file path (multer gives this)
     const uploadedPath = req.file.path;
 
-    // Encrypted file path
+    // Encrypted file name
     const encryptedFilename = req.file.filename + ".enc";
-    const encryptedPath = path.join("src/uploads", encryptedFilename);
 
-    // Encrypt file
-    encryptFile(uploadedPath, encryptedPath);
+    // Temp encrypted file path
+    const encryptedPath = path.join(tempDir, encryptedFilename);
 
-    // Delete original uploaded file
+    /* 1. Encrypt locally (temp) */
+    await encryptFile(uploadedPath, encryptedPath);
+
+    /* 2. Delete original uploaded file */
     fs.unlinkSync(uploadedPath);
 
-    // Save metadata in DB
+    /* 3. Upload encrypted file to Supabase Storage */
+    const storageKey = `encrypted/${encryptedFilename}`;
+
+    await uploadEncryptedToStorage(encryptedPath, storageKey);
+
+    /* 4. Delete temp encrypted file */
+    fs.unlinkSync(encryptedPath);
+
+    /* 5. Save metadata in DB */
     const savedFile = await prisma.file.create({
       data: {
         filename: req.file.originalname,
-        encryptedPath: encryptedPath,
+        encryptedPath: storageKey, // Supabase Storage key
         ownerId: userId,
       },
     });
 
     return res.status(201).json({
-      message: "File uploaded and encrypted successfully 🔐",
+      message: "File uploaded + encrypted + stored in Supabase ✅🔐",
       file: savedFile,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Upload failed", error });
+    return res.status(500).json({
+      message: "Upload failed ❌",
+      error,
+    });
   }
-  
 };
+
+/* ----------------------------------------
+   Download File Controller
+----------------------------------------- */
 export const downloadFile = async (req: AuthRequest, res: Response) => {
   try {
     const fileId = String(req.params.id);
     const userId = req.user.id;
 
-    // 1. Find file in DB
+    /* 1. Find file metadata */
     const file = await prisma.file.findUnique({
       where: { id: fileId },
     });
@@ -58,34 +98,47 @@ export const downloadFile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "File not found ❌" });
     }
 
-    // 2. Ownership check
+    /* 2. Ownership check */
     if (file.ownerId !== userId) {
       return res.status(403).json({ message: "Access denied ❌" });
     }
 
-    const encryptedPath = file.encryptedPath;
+    // Temp directory
+    const tempDir = getTempDir();
 
-    // 3. Temporary decrypted file path
-    const tempDecryptedPath = path.join(
-      "src/uploads",
+    /* Supabase storage key */
+    const storageKey = file.encryptedPath;
+
+    /* Temp encrypted + decrypted paths */
+    const encryptedTempPath = path.join(
+      tempDir,
+      `temp-${Date.now()}.enc`
+    );
+
+    const decryptedTempPath = path.join(
+      tempDir,
       `decrypted-${Date.now()}-${file.filename}`
     );
 
-    // 4. Decrypt file
-    decryptFile(encryptedPath, tempDecryptedPath);
+    /* 3. Download encrypted file from Supabase */
+    await downloadEncryptedFromStorage(storageKey, encryptedTempPath);
 
-    // 5. Wait until file exists, then send
-    setTimeout(() => {
-      res.download(tempDecryptedPath, file.filename, (err) => {
-        // Delete temp decrypted file after download
-        if (fs.existsSync(tempDecryptedPath)) {
-          fs.unlinkSync(tempDecryptedPath);
-        }
-      });
-    }, 300);
+    /* 4. Decrypt locally */
+    await decryptFile(encryptedTempPath, decryptedTempPath);
+
+    /* 5. Delete encrypted temp file */
+    fs.unlinkSync(encryptedTempPath);
+
+    /* 6. Send decrypted file */
+    res.download(decryptedTempPath, file.filename, () => {
+      // Cleanup decrypted file after download
+      if (fs.existsSync(decryptedTempPath)) {
+        fs.unlinkSync(decryptedTempPath);
+      }
+    });
   } catch (error) {
     return res.status(500).json({
-      message: "Download failed",
+      message: "Download failed ❌",
       error,
     });
   }
