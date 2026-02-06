@@ -143,3 +143,23 @@ export const downloadFile = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+export const getMyFiles = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user.id;
+
+    const files = await prisma.file.findMany({
+      where: { ownerId: userId },
+      orderBy: { uploadedAt: "desc" },
+    });
+
+    return res.json({
+      message: "Files fetched successfully ✅",
+      files,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch files ❌",
+      error,
+    });
+  }
+};
