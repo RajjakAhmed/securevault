@@ -1,5 +1,4 @@
 import express from "express";
-import { uploadFile } from "../controllers/filecontrollers";
 import { protect } from "../middleware/authMiddleware";
 import { upload } from "../middleware/uploadMiddleware";
 import { uploadFile, downloadFile } from "../controllers/filecontrollers";
