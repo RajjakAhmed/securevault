@@ -15,16 +15,28 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
-  files     File[]
+  files File[]
 }
 
 model File {
-  id         String   @id @default(uuid())
-  filename   String
+  id            String @id @default(uuid())
+  filename      String
   encryptedPath String
-  ownerId    String
+  ownerId       String
 
-  owner      User     @relation(fields: [ownerId], references: [id])
+  owner      User        @relation(fields: [ownerId], references: [id])
+  shareLinks ShareLink[]
 
   uploadedAt DateTime @default(now())
+}
+
+model ShareLink {
+  id    String @id @default(uuid())
+  token String @unique
+
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id])
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
