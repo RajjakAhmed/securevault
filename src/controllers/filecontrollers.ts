@@ -46,7 +46,7 @@ export const uploadFile = async (req: AuthRequest, res: Response) => {
 };
 export const downloadFile = async (req: AuthRequest, res: Response) => {
   try {
-    const fileId = req.params.id;
+    const fileId = String(req.params.id);
     const userId = req.user.id;
 
     // 1. Find file in DB
