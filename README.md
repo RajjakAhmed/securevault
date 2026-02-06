@@ -1,82 +1,103 @@
-# SecureVault Backend (Node.js + TypeScript + Prisma)
+<h1 align="center">SecureVault Backend</h1>
 
-SecureVault is a production-style encrypted file storage backend that provides secure file upload, encryption, cloud storage, and controlled access using modern backend technologies.
+<p align="center">
+  Production-ready encrypted file storage backend built with Node.js, TypeScript, Prisma, PostgreSQL, and Supabase Storage.
+</p>
 
-It is designed as a real-world security-focused project with encryption, authentication, and cloud persistence.
+<hr/>
 
----
+<h2>Overview</h2>
 
-## Live Backend API
+<p>
+  <b>SecureVault</b> is a security-focused backend system that allows users to upload, encrypt, store, and securely download files.
+  Files are never stored in plaintext, and access is strictly controlled using JWT authentication.
+</p>
 
-**Render Deployment**
+<hr/>
 
-https://securevault-8fe3.onrender.com
+<h2>Live API</h2>
 
-**Test Root Endpoint**
+<p>
+  <b>Render Deployment:</b><br/>
+  <a href="https://securevault-8fe3.onrender.com">
+    https://securevault-8fe3.onrender.com
+  </a>
+</p>
 
-```bash
+<p>
+  <b>Test Root Endpoint:</b>
+</p>
+
+<pre>
 GET /
-Response:
-
-text
-Copy code
 SecureVault API running 🚀
-Core Features
-Authentication System
-Secure user registration and login
+</pre>
 
-Password hashing using bcrypt
+<hr/>
 
-JWT token-based authentication
+<h2>Core Features</h2>
 
-Protected routes for authorized users only
+<ul>
+  <li><b>Authentication System</b> (Register/Login with JWT)</li>
+  <li><b>AES File Encryption</b> before cloud storage</li>
+  <li><b>Supabase Storage Integration</b> for encrypted file persistence</li>
+  <li><b>PostgreSQL Metadata Storage</b> via Prisma ORM</li>
+  <li><b>Owner-Based Access Control</b> (users can only access their own files)</li>
+  <li><b>Secure Download + Temporary Decryption</b></li>
+</ul>
 
-Secure File Vault
-Upload any file securely
+<hr/>
 
-Files are encrypted before storage
+<h2>Tech Stack</h2>
 
-Encrypted files stored in Supabase Storage
+<table>
+  <tr>
+    <th>Technology</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td>Node.js</td>
+    <td>Backend runtime</td>
+  </tr>
+  <tr>
+    <td>Express.js</td>
+    <td>REST API framework</td>
+  </tr>
+  <tr>
+    <td>TypeScript</td>
+    <td>Type-safe backend development</td>
+  </tr>
+  <tr>
+    <td>Prisma ORM</td>
+    <td>Database interaction</td>
+  </tr>
+  <tr>
+    <td>PostgreSQL (Supabase)</td>
+    <td>Relational database</td>
+  </tr>
+  <tr>
+    <td>Supabase Storage</td>
+    <td>Encrypted cloud file storage</td>
+  </tr>
+  <tr>
+    <td>AES Encryption</td>
+    <td>File security layer</td>
+  </tr>
+  <tr>
+    <td>JWT Authentication</td>
+    <td>Route protection and access control</td>
+  </tr>
+  <tr>
+    <td>Render</td>
+    <td>Deployment platform</td>
+  </tr>
+</table>
 
-Metadata stored in PostgreSQL database
+<hr/>
 
-Encryption & Decryption Workflow
-Files are never stored in plaintext
+<h2>Project Structure</h2>
 
-Download decrypts files temporarily on server
-
-Temporary encrypted/decrypted files are auto-cleaned
-
-Cloud Storage Support
-Supabase Storage used instead of local disk
-
-Works across devices (browser, mobile, cloud)
-
-Access Control
-Only the file owner can:
-
-View uploaded files
-
-Download decrypted files
-
-Delete files permanently
-
-Tech Stack
-Technology	Purpose
-Node.js	Backend runtime
-Express.js	REST API framework
-TypeScript	Type-safe development
-Prisma ORM	Database interaction
-PostgreSQL (Supabase)	Relational database
-Supabase Storage	Encrypted file storage
-Multer	File upload handling
-AES Encryption	Secure file encryption
-JWT Authentication	User authorization
-Render	Deployment platform
-
-Project Folder Structure
-bash
-Copy code
+<pre>
 src/
  ┣ controllers/
  ┃ ┣ authcontrollers.ts
@@ -95,182 +116,166 @@ src/
  ┃ ┣ supabase.ts
  ┃ ┣ storageUpload.ts
  ┃ ┗ storageDownload.ts
- ┣ uploads/ (local dev only)
  ┗ index.ts
 
 prisma/
  ┣ schema.prisma
  ┗ migrations/
-API Endpoints
-Auth Routes
-Method	Endpoint	Description
-POST	/api/auth/register	Register new user
-POST	/api/auth/login	Login user and return JWT
+</pre>
 
-File Routes (Protected)
-Method	Endpoint	Description
-POST	/api/files/upload	Upload and encrypt file
-GET	/api/files/myfiles	List user files
-GET	/api/files/download/:id	Download and decrypt file
-DELETE	/api/files/delete/:id	Delete file permanently
+<hr/>
 
-Testing with CURL
-Register User
-bash
-Copy code
-curl -X POST https://securevault-8fe3.onrender.com/api/auth/register \
--H "Content-Type: application/json" \
--d '{"name":"Rajjak","email":"rajjak@gmail.com","password":"123456"}'
-Login User
-bash
-Copy code
-curl -X POST https://securevault-8fe3.onrender.com/api/auth/login \
--H "Content-Type: application/json" \
--d '{"email":"rajjak@gmail.com","password":"123456"}'
-Response:
+<h2>API Endpoints</h2>
 
-json
-Copy code
-{
-  "token": "YOUR_JWT_TOKEN"
-}
-Upload File
-bash
-Copy code
-curl -X POST https://securevault-8fe3.onrender.com/api/files/upload \
--H "Authorization: Bearer YOUR_TOKEN" \
--F "file=@/home/user/Desktop/test.pdf"
-List My Files
-bash
-Copy code
-curl -X GET https://securevault-8fe3.onrender.com/api/files/myfiles \
--H "Authorization: Bearer YOUR_TOKEN"
-Download File
-bash
-Copy code
-curl -L -X GET https://securevault-8fe3.onrender.com/api/files/download/FILE_ID \
--H "Authorization: Bearer YOUR_TOKEN" \
--o downloaded.pdf
-Encryption Workflow
-Upload Flow
-text
-Copy code
-User uploads file
-      ↓
-Multer stores temporary upload
-      ↓
-AES encryption applied
-      ↓
-Encrypted file uploaded to Supabase Storage
-      ↓
-Metadata stored in PostgreSQL
-      ↓
-Temporary files removed
-Download Flow
-text
-Copy code
-User requests download
-      ↓
-Encrypted file fetched from Supabase
-      ↓
-Decrypted temporarily on server
-      ↓
-Sent to client securely
-      ↓
-Temporary decrypted file removed
-Database Schema (Prisma)
-prisma
-Copy code
-model User {
-  id       String   @id @default(uuid())
-  name     String
-  email    String   @unique
-  password String
-  files    File[]
-}
+<h3>Auth Routes</h3>
 
-model File {
-  id            String   @id @default(uuid())
-  filename      String
-  encryptedPath String
-  ownerId       String
-  uploadedAt    DateTime @default(now())
+<table>
+  <tr>
+    <th>Method</th>
+    <th>Endpoint</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/api/auth/register</td>
+    <td>Register new user</td>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/api/auth/login</td>
+    <td>Login and return JWT token</td>
+  </tr>
+</table>
 
-  owner User @relation(fields: [ownerId], references: [id])
-}
-Environment Variables
-Create a .env file:
+<br/>
 
-env
-Copy code
+<h3>File Routes (Protected)</h3>
+
+<table>
+  <tr>
+    <th>Method</th>
+    <th>Endpoint</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>POST</td>
+    <td>/api/files/upload</td>
+    <td>Upload + Encrypt file</td>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>/api/files/myfiles</td>
+    <td>List user files</td>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>/api/files/download/:id</td>
+    <td>Download + Decrypt file</td>
+  </tr>
+  <tr>
+    <td>DELETE</td>
+    <td>/api/files/delete/:id</td>
+    <td>Delete file permanently</td>
+  </tr>
+</table>
+
+<hr/>
+
+<h2>Encryption Workflow</h2>
+
+<h3>Upload Flow</h3>
+
+<pre>
+User Uploads File
+      ↓
+Multer Temporary Storage
+      ↓
+AES Encryption Applied
+      ↓
+Encrypted File Uploaded to Supabase Storage
+      ↓
+Metadata Saved in PostgreSQL
+      ↓
+Temporary Files Removed
+</pre>
+
+<h3>Download Flow</h3>
+
+<pre>
+User Requests Download
+      ↓
+Encrypted File Fetched from Supabase
+      ↓
+Decrypted Temporarily on Server
+      ↓
+Sent Securely to Client
+      ↓
+Temporary Decrypted File Removed
+</pre>
+
+<hr/>
+
+<h2>Environment Variables</h2>
+
+<pre>
 DATABASE_URL=your_supabase_postgres_url
-
 JWT_SECRET=your_secret_key
-
 FILE_ENCRYPTION_KEY=32_char_secure_key
-
 SUPABASE_URL=https://xxxx.supabase.co
-
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-Run Locally
-Install Dependencies
-bash
-Copy code
+</pre>
+
+<hr/>
+
+<h2>Run Locally</h2>
+
+<pre>
 npm install
-Generate Prisma Client
-bash
-Copy code
 npx prisma generate
-Run Migrations
-bash
-Copy code
 npx prisma migrate dev
-Start Server
-bash
-Copy code
 npm run dev
+</pre>
+
+<p>
 Backend runs at:
+</p>
 
-text
-Copy code
+<pre>
 http://localhost:5000
-Deployment (Render)
-The backend is deployed on Render using:
+</pre>
 
-bash
-Copy code
-npm install
-npx prisma generate
-npm run build
-node dist/index.js
-Supabase PostgreSQL and Storage provide cloud persistence.
+<hr/>
 
-Future Enhancements
-QR-based secure file sharing links
+<h2>Future Enhancements</h2>
 
-Public/Private vault mode
+<ul>
+  <li>QR-based secure file sharing</li>
+  <li>Public/Private vault mode</li>
+  <li>File expiry system</li>
+  <li>VirusTotal malware scan integration</li>
+  <li>Download audit logs and security reports</li>
+  <li>Admin dashboard</li>
+</ul>
 
-File expiry system
+<hr/>
 
-VirusTotal malware scan integration
+<h2>Author</h2>
 
-Download audit logs and security reports
+<p>
+  <b>Rajjak Ahmed</b><br/>
+  Computer Science Engineer<br/>
+  Focused on building secure backend and full-stack systems<br/><br/>
 
-Admin dashboard
+  GitHub:
+  <a href="https://github.com/RajjakAhmed">
+    https://github.com/RajjakAhmed
+  </a>
+</p>
 
-Author
-Rajjak Ahmed
-Computer Science Engineer
-Focused on building secure backend and full-stack systems
+<hr/>
 
-GitHub: https://github.com/RajjakAhmed
+<h2>Support</h2>
 
-Support
-If you found this project useful, consider giving it a star on GitHub.
-
-yaml
-Copy code
-
----
-
-If you want, next I can do the **QR Share Feature README + Implementation plan** so your project becomes a standout security portfolio project.
+<p>
+  If you found this project useful, consider giving it a star on GitHub.
+</p>
