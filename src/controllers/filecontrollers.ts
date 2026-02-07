@@ -184,21 +184,29 @@ export const deleteFile = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: "Access denied ❌" });
     }
 
-    // 3. Delete from Supabase Storage
+    // ✅ 3. Delete share links first (IMPORTANT FIX)
+    await prisma.shareLink.deleteMany({
+      where: { fileId },
+    });
+
+    // ✅ 4. Delete encrypted file from Supabase Storage
     await deleteEncryptedFromStorage(file.encryptedPath);
 
-    // 4. Delete from Database
+    // ✅ 5. Delete file record from DB
     await prisma.file.delete({
       where: { id: fileId },
     });
 
-    return res.status(200).json({
-      message: "File deleted successfully ✅",
+    return res.json({
+      message: "File deleted permanently ✅",
     });
   } catch (error) {
+    console.error("DELETE ERROR:", error);
+
     return res.status(500).json({
       message: "Delete failed ❌",
-      error,
+      error: String(error),
     });
   }
 };
+
