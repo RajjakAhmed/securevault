@@ -89,7 +89,7 @@ export const generateShareLink = async (
       userId,
       action: "SHARE_LINK_CREATED",
       fileId,
-      ipAddress: req.ip,
+      ipAddress:  req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip,
       metadata: {
         expiresAt,
         passwordProtected: !!passwordHash,
@@ -166,7 +166,7 @@ export const verifyShareLinkPassword = async (
     await logAuditEvent({
       action: "SHARE_PASSWORD_VERIFIED",
       fileId: share.fileId,
-      ipAddress: req.ip,
+      ipAddress:  req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip,
       metadata: {
         token,
         validForMinutes: share.unlockMinutes || 2,
@@ -251,7 +251,7 @@ export const downloadSharedFile = async (req: Request, res: Response) => {
       await logAuditEvent({
         action: "SHARED_FILE_DOWNLOADED",
         fileId: share.fileId,
-        ipAddress: req.ip,
+        ipAddress: req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip,
         metadata: {
           token,
           filename: file.filename,
