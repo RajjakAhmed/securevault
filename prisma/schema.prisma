@@ -17,6 +17,7 @@ model User {
 
   files File[]
   auditLogs AuditLog[]
+  teamMemberships TeamMember[]
 
 }
 
@@ -24,15 +25,18 @@ model File {
   id            String @id @default(uuid())
   filename      String
   encryptedPath String
-  ownerId       String
 
-  owner      User        @relation(fields: [ownerId], references: [id])
+  ownerId       String?
+  owner         User?   @relation(fields: [ownerId], references: [id])
+
+  teamId        String?
+  team          Team?   @relation(fields: [teamId], references: [id])
+
   shareLinks ShareLink[]
-
   uploadedAt DateTime @default(now())
-  auditLogs AuditLog[]
-
+  auditLogs  AuditLog[]
 }
+
 
 model ShareLink {
   id            String   @id @default(uuid())
@@ -71,3 +75,36 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  members   TeamMember[]
+  files     File[]
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  role      TeamRole @default(MEMBER)
+
+  joinedAt  DateTime @default(now())
+
+  @@unique([teamId, userId])
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}

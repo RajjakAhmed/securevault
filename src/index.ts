@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authroutes";
 import fileRoutes from "./routes/fileroutes";
+import teamRoutes from "./routes/teamroutes";
 import cors from "cors";
 
 
@@ -20,6 +21,7 @@ app.use(
 // Auth Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
+app.use("/api/teams", teamRoutes);
 
 
 app.get("/", (req, res) => {
